@@ -39,7 +39,7 @@
 		const LANG_NO_CONTENT_PASSED = "No content submitted - please check the file that you are using.";
 
 		// current state
-		private $state = "";
+		private $state = self::STATE_ZERO_POINT;
 
 		// robots.txt file content
 		private $content = "";
@@ -55,27 +55,18 @@
 		protected $previous_directive = "";
 		protected $userAgent = "*";
 
-		/**
-		 * @param  string $content  - file content
-		 * @param  string $encoding - encoding
-		 * @throws InvalidArgumentException
-		 * @return RobotsTxtParser
-		 */
+        /**
+         * @param string $content
+         * @param string $encoding
+         */
 		public function __construct($content, $encoding = self::DEFAULT_ENCODING)
 		{
-			// convert encoding
-			$encoding = !empty($encoding) ? $encoding : mb_detect_encoding($content);
-			mb_internal_encoding($encoding);
-
-			// set content
-			$this->content = iconv($encoding, 'UTF-8//IGNORE', $content);
-
-			// Ensure that there's a newline at the end of the file, otherwise the
-			// last line is ignored
-			$this->content .= PHP_EOL;
+			$this->setContent($content, $encoding);
 
 			// set default state
-			$this->state = self::STATE_ZERO_POINT;
+            if ($this->state !== self::STATE_ZERO_POINT) {
+                $this->state = self::STATE_ZERO_POINT;
+            }
 
 			// parse rules - default state
 			$this->prepareRules();
@@ -556,5 +547,28 @@
         public function getContent()
         {
             return $this->content;
+        }
+
+        /**
+         * Set content to be parsed
+         *
+         * @param string $content
+         * @param string $encoding
+         * @return RobotsTxtParser
+         */
+        public function setContent($content, $encoding = self::DEFAULT_ENCODING)
+        {
+            // convert encoding
+            $encoding = !empty($encoding) ? $encoding : mb_detect_encoding($content);
+            mb_internal_encoding($encoding);
+
+            // set content
+            $this->content = trim(iconv($encoding, 'UTF-8//IGNORE', $content));
+
+            // Ensure that there's a newline at the end of the file, otherwise the
+            // last line is ignored
+            $this->content .= PHP_EOL;
+
+            return $this;
         }
 	}
